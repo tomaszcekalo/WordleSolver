@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using WordleSolver;
 
 Console.WriteLine("Hello, World!");
 
@@ -45,38 +47,69 @@ for (char letter = 'a'; letter <= 'z'; letter++)
     kb.Add(letter, kbsr.FindElement(ks.Key(letter)));
 }
 kb.Add('↵', kbsr.FindElement(ks.Key('↵')));
+ITypist typist = new Typist(kb);
 Thread.Sleep(5000);
 
-kb['w'].Click();
-kb['e'].Click();
-kb['a'].Click();
-kb['r'].Click();
-kb['y'].Click();
-kb['↵'].Click();
+//kb['w'].Click();
+//kb['e'].Click();
+//kb['a'].Click();
+//kb['r'].Click();
+//kb['y'].Click();
+//kb['↵'].Click();
+typist.InputWord("weary");
 Thread.Sleep(5000);
 
-kb['s'].Click();
-kb['c'].Click();
-kb['i'].Click();
-kb['o'].Click();
-kb['n'].Click();
-kb['↵'].Click();
+//kb['s'].Click();
+//kb['c'].Click();
+//kb['i'].Click();
+//kb['o'].Click();
+//kb['n'].Click();
+//kb['↵'].Click();
+typist.InputWord("scion");
 Thread.Sleep(5000);
 
 var nonEmptyRows = gameApp.GetShadowRoot().FindElements(By.CssSelector("#board game-row:not([letters=\"\"]"));
-List<string> words = new List<string>();
+
+var text = File.ReadAllText("word.json");
+var wordleDB = JsonConvert.DeserializeObject<WordleData>(text);
+IEnumerable<string> words = wordleDB.Words.ToList();
+List<char> present = new List<char>();
+List<char> absent = new List<char>();
 
 foreach (var row in nonEmptyRows)
 {
     var letters = row.GetShadowRoot().FindElements(By.CssSelector("div.row game-tile"));
-}
-
-Thread.Sleep(5000);
-
-internal class KeyboardSelector
-{
-    public By Key(char letter)
+    var guess = row.GetAttribute("letters");
+    for (int i = 0; i < 5; i++)
     {
-        return By.CssSelector($"button[data-key=\"{letter}\"]");
+        var letterProperty = letters[i].GetAttribute("letter");
+        var character = letterProperty[0];
+        var dataState = letters[i].GetAttribute("evaluation");
+        if (dataState == "correct")
+        {
+            words = words.Where(x => x[i] == character).ToList();
+        }
+        else if (dataState == "present")
+        {
+            present.Add(character);
+        }
+        else if (dataState == "absent")
+        {
+            absent.Add(character);
+        }
     }
 }
+
+foreach (var p in present)
+{
+    words = words.Where(x => x.Contains(p));
+}
+
+foreach (var a in absent.Distinct().Except(present))
+{
+    words = words.Where(x => !x.Contains(a));
+}
+
+var possibleWords = words.ToList();
+
+Console.ReadKey();
