@@ -65,51 +65,73 @@ Thread.Sleep(5000);
 //kb['o'].Click();
 //kb['n'].Click();
 //kb['↵'].Click();
-typist.InputWord("scion");
-Thread.Sleep(5000);
-
-var nonEmptyRows = gameApp.GetShadowRoot().FindElements(By.CssSelector("#board game-row:not([letters=\"\"]"));
+//typist.InputWord("scion");
+//Thread.Sleep(5000);
 
 var text = File.ReadAllText("word.json");
 var wordleDB = JsonConvert.DeserializeObject<WordleData>(text);
-IEnumerable<string> words = wordleDB.Words.ToList();
-List<char> present = new List<char>();
-List<char> absent = new List<char>();
+List<string> possibleWords = wordleDB.Words.ToList();
 
-foreach (var row in nonEmptyRows)
+while (possibleWords.Count > 1)
 {
-    var letters = row.GetShadowRoot().FindElements(By.CssSelector("div.row game-tile"));
-    var guess = row.GetAttribute("letters");
-    for (int i = 0; i < 5; i++)
+    IEnumerable<string> words = wordleDB.Words.ToList();
+    List<char> present = new List<char>();
+    List<char> absent = new List<char>();
+    var nonEmptyRows = gameApp.GetShadowRoot().FindElements(By.CssSelector("#board game-row:not([letters=\"\"]"));
+
+    if (nonEmptyRows.Count >= 6)
     {
-        var letterProperty = letters[i].GetAttribute("letter");
-        var character = letterProperty[0];
-        var dataState = letters[i].GetAttribute("evaluation");
-        if (dataState == "correct")
+        break;
+    }
+    int correctCount=0;
+    foreach (var row in nonEmptyRows)
+    {
+        var letters = row.GetShadowRoot().FindElements(By.CssSelector("div.row game-tile"));
+        var guess = row.GetAttribute("letters");
+        correctCount = 0;
+        for (int i = 0; i < 5; i++)
         {
-            words = words.Where(x => x[i] == character).ToList();
+            var letterProperty = letters[i].GetAttribute("letter");
+            var character = letterProperty[0];
+            var dataState = letters[i].GetAttribute("evaluation");
+            if (dataState == "correct")
+            {
+                words = words.Where(x => x[i] == character).ToList();
+                correctCount++;
+            }
+            else if (dataState == "present")
+            {
+                words = words.Where(x => x[i] != character).ToList();
+                present.Add(character);
+            }
+            else if (dataState == "absent")
+            {
+                absent.Add(character);
+            }
         }
-        else if (dataState == "present")
+        if (correctCount == 5)
         {
-            present.Add(character);
-        }
-        else if (dataState == "absent")
-        {
-            absent.Add(character);
+            break;
         }
     }
-}
+    if (correctCount == 5)
+    {
+        break;
+    }
 
-foreach (var p in present)
-{
-    words = words.Where(x => x.Contains(p));
-}
+    foreach (var p in present)
+    {
+        words = words.Where(x => x.Contains(p));
+    }
 
-foreach (var a in absent.Distinct().Except(present))
-{
-    words = words.Where(x => !x.Contains(a));
-}
+    foreach (var a in absent.Distinct().Except(present))
+    {
+        words = words.Where(x => !x.Contains(a));
+    }
 
-var possibleWords = words.ToList();
+    possibleWords = words.ToList();
+    typist.InputWord(possibleWords.First());
+    Thread.Sleep(5000);
+}
 
 Console.ReadKey();
