@@ -24,16 +24,12 @@ var gameIcon = modal.GetShadowRoot().FindElement(By.CssSelector("game-icon"));
 Thread.Sleep(1000);
 gameIcon.Click();
 Thread.Sleep(1000);
-//driver.FindElement(By.CssSelector("game-app game-modal game-icon")).Click();
 var ks = new KeyboardSelector();
 var kbsr = gameApp.GetShadowRoot().FindElement(By.CssSelector("game-keyboard")).GetShadowRoot();
 
 WebDriverWait wait = new WebDriverWait(driver, new TimeSpan(0, 0, 25));
 
-var overlay = driver
-    .FindElement(By.CssSelector("game-app"))
-    .GetShadowRoot()
-    .FindElement(By.CssSelector("game-modal"))
+var overlay = modal
     .GetShadowRoot()
     .FindElement(By.CssSelector("div.overlay"));
 var enter = kbsr.FindElement(ks.Key('↵'));
@@ -50,23 +46,8 @@ kb.Add('↵', kbsr.FindElement(ks.Key('↵')));
 ITypist typist = new Typist(kb);
 Thread.Sleep(5000);
 
-//kb['w'].Click();
-//kb['e'].Click();
-//kb['a'].Click();
-//kb['r'].Click();
-//kb['y'].Click();
-//kb['↵'].Click();
 typist.InputWord("weary");
 Thread.Sleep(5000);
-
-//kb['s'].Click();
-//kb['c'].Click();
-//kb['i'].Click();
-//kb['o'].Click();
-//kb['n'].Click();
-//kb['↵'].Click();
-//typist.InputWord("scion");
-//Thread.Sleep(5000);
 
 var text = File.ReadAllText("word.json");
 var wordleDB = JsonConvert.DeserializeObject<WordleData>(text);
@@ -83,7 +64,7 @@ while (possibleWords.Count > 1)
     {
         break;
     }
-    int correctCount=0;
+    int correctCount = 0;
     foreach (var row in nonEmptyRows)
     {
         var letters = row.GetShadowRoot().FindElements(By.CssSelector("div.row game-tile"));
